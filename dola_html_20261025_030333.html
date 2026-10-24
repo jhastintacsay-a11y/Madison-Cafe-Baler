@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Madison's Cafe Baler — Order Online</title>
+  <style>
+    *{box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:0}
+    :root{
+      --coffee:#5D4037;
+      --cafe-orange:#FF8A00;
+      --cream:#FFF8F0;
+      --dark:#2B2B2B;
+      --accent:#795548;
+      --error:#d32f2f;
+      --success:#2e7d32;
+      --fb-blue:#1877F2;
+    }
+    body{max-width:850px;margin:0 auto;padding:20px;padding-bottom:320px;background:var(--cream);color:var(--dark);line-height:1.55}
+    header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #E0D2C3}
+    h1{font-size:1.9rem;color:var(--coffee);margin-bottom:4px}
+    header p{color:var(--accent);font-weight:500}
+    .step{background:#fff;border-radius:14px;padding:26px;margin-bottom:22px;box-shadow:0 3px 10px rgba(93,64,55,.12)}
+    .step h2{font-size:1.15rem;margin-bottom:18px;color:var(--coffee);padding-bottom:8px;border-bottom:2px solid #F0E6DD}
+    .option-btn{display:block;width:100%;border:2px solid #D7C7B8;background:#fff;padding:15px;border-radius:10px;margin:10px 0;font-size:1.05rem;cursor:pointer;transition:.25s}
+    .option-btn:hover,.option-btn.active{border-color:var(--cafe-orange);background:#FFF3E5;color:var(--cafe-orange);font-weight:600}
+    .menu-category{margin-bottom:24px}
+    .cat-title{font-weight:700;color:var(--coffee);margin:18px 0 10px 0;padding-bottom:4px;border-bottom:1px dashed #D7C7B8}
+    .menu-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #F2E9DF}
+    .item-left{flex:1}
+    .item-name{font-weight:600}
+    .item-price{color:var(--accent);font-size:.92rem}
+    .qty-controls{display:flex;align-items:center;gap:10px}
+    .qty-btn{width:34px;height:34px;border:none;border-radius:50%;background:var(--coffee);color:#fff;font-size:1.1rem;cursor:pointer;transition:.2s}
+    .qty-btn:hover{background:var(--cafe-orange)}
+    .qty-val{min-width:26px;text-align:center;font-weight:700;font-size:1.05rem}
+    
+    /* ✅ FLOATING CART — Always visible at bottom */
+    .cart{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:850px;background:#fff;border-radius:16px 16px 0 0;padding:18px 22px;box-shadow:0 -4px 20px rgba(93,64,55,.18);z-index:999;border-top:2px solid #E0D2C3}
+    .cart h3{color:var(--coffee);margin-bottom:8px;font-size:1.1rem}
+    .cart-scroll{max-height:140px;overflow-y:auto;margin-bottom:8px}
+    .cart-item{display:flex;justify-content:space-between;padding:4px 0;font-size:.92rem}
+    .cart-total{display:flex;justify-content:space-between;font-weight:800;font-size:1.15rem;margin-top:8px;padding-top:8px;border-top:2px solid #E0D2C3;color:var(--coffee)}
+    
+    .copy-btn{width:100%;border:none;background:var(--cafe-orange);color:#fff;padding:14px;border-radius:10px;font-size:1rem;font-weight:600;margin-top:10px;cursor:pointer;transition:.25s}
+    .copy-btn:hover{background:#E67A00}
+    .copy-btn:disabled{background:#C4C4C4;cursor:not-allowed}
+    
+    .fb-link-box{margin-top:10px;padding:14px;background:#E7F3FF;border-radius:10px;text-align:center;border:2px solid var(--fb-blue)}
+    .fb-link-box a{display:block;color:var(--fb-blue);font-weight:700;font-size:1rem;text-decoration:underline;margin-top:6px}
+    .hidden{display:none!important}
+    .form-group{margin:16px 0}
+    label{display:block;font-weight:600;margin-bottom:6px;color:var(--coffee)}
+    input,textarea{width:100%;padding:12px;border:2px solid #D7C7B8;border-radius:8px;font-size:1rem}
+    input:focus,textarea:focus{outline:none;border-color:var(--cafe-orange)}
+    .hint{font-size:.85rem;margin-top:4px}
+    .error-text{color:var(--error)}
+    .success-text{color:var(--success)}
+    .notice{margin-top:8px;padding:6px 10px;border-radius:6px;font-weight:500;font-size:.9rem}
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>☕ Madison's Cafe Baler</h1>
+    <p>Select items → Copy your order → Go to our Facebook page to send</p>
+  </header>
+
+  <!-- STEP 1: ORDER TYPE -->
+  <div class="step" id="step-type">
+    <h2>Step 1 — Select Order Type</h2>
+    <button class="option-btn" data-type="Dine-In">🍽️ Dine‑In</button>
+    <button class="option-btn" data-type="Take-Out">🥡 Take‑Out</button>
+    <button class="option-btn" data-type="Delivery">🚚 Delivery</button>
+  </div>
+
+  <!-- STEP 1B: EXTRA DETAILS -->
+  <div class="step hidden" id="step-extras">
+    <h2>Additional Details</h2>
+    <div id="dinein-fields" class="hidden">
+      <div class="form-group">
+        <label for="table-number">Table Number *</label>
+        <input type="text" id="table-number" placeholder="e.g. 1, 5, 12" />
+      </div>
+    </div>
+    <div id="takeout-fields" class="hidden">
+      <div class="form-group">
+        <label for="claim-number">Preferred Claim Number</label>
+        <input type="text" id="claim-number" placeholder="e.g. 17, 42, 105" />
+        <div id="claim-status" class="hint"></div>
+      </div>
+    </div>
+    <div id="delivery-fields" class="hidden">
+      <div class="form-group">
+        <label for="delivery-address">Complete Delivery Address *</label>
+        <textarea id="delivery-address" rows="3" placeholder="House No., Street, Barangay, Town/City, Landmark"></textarea>
+      </div>
+    </div>
+    <button class="option-btn" id="confirm-extras" style="margin-top:10px;background:var(--coffee);color:#fff;border-color:var(--coffee)">Proceed to Menu →</button>
+  </div>
+
+  <!-- STEP 2: MENU -->
+  <div class="step hidden" id="step-menu">
+    <h2>Step 2 — Your Order: <span id="chosen-type" style="color:var(--cafe-orange)"></span></h2>
+    <div id="menu-list"></div>
+  </div>
+
+  <!-- ✅ FLOATING CART — Always at bottom of screen -->
+  <div class="cart">
+    <h3>🛒 Your Cart</h3>
+    <div class="cart-scroll">
+      <div id="cart-contents"></div>
+      <div id="extra-summary" style="font-size:.85rem;color:#555;margin:4px 0"></div>
+    </div>
+    <div class="cart-total">
+      <span>TOTAL</span>
+      <span id="cart-total">₱0.00</span>
+    </div>
+
+    <button class="copy-btn" id="copy-order" disabled>📋 Copy My Order</button>
+    
+    <div id="copy-notice" class="notice hidden"></div>
+
+    <!-- Facebook Link — Appears after copy -->
+    <div id="fb-link-section" class="fb-link-box hidden">
+      ✅ Order Copied! Send here:
+      <a href="https://www.facebook.com/share/1FQ7A42Xsp/" target="_blank">👉 CLICK HERE TO GO TO OUR FACEBOOK PAGE</a>
+      <p style="margin:6px 0 0 0;font-size:.8rem;color:#665">Paste message & send — Thank you!</p>
+    </div>
+  </div>
+
+<script>
+// =============== CONFIGURE ===============
+const FACEBOOK_PAGE_URL = "https://www.facebook.com/share/1FQ7A42Xsp/";
+const CURRENCY = "₱";
+
+let takenClaimNumbers = [1, 5, 12, 23, 30];
+// ==========================================
+
+const MENU = [
+  {id:1,category:"Salad",name:"Ceasar",price:200},
+  {id:2,category:"Salad",name:"Madison's Choice",price:200},
+  {id:3,category:"Salad",name:"Kani",price:200},
+  {id:4,category:"Pasta",name:"Spicy Tuna",price:250},
+  {id:5,category:"Pasta",name:"Mac & Cheese",price:250},
+  {id:6,category:"Pasta",name:"Beef Stroganoff",price:250},
+  {id:7,category:"Pasta",name:"Spicy Meatballs",price:250},
+  {id:8,category:"Pasta",name:"Creamy Tuna Mac",price:250},
+  {id:9,category:"Pasta",name:"Chicken & Mushroom",price:250},
+  {id:10,category:"Pasta",name:"Carbonara",price:250},
+  {id:11,category:"Pesto",name:"Tuyo",price:250},
+  {id:12,category:"Pesto",name:"Tofu",price:250},
+  {id:13,category:"Pesto",name:"Bacon",price:250},
+  {id:14,category:"Pesto",name:"Chicken",price:250},
+  {id:15,category:"Pesto",name:"Longanisa",price:250},
+  {id:16,category:"Pesto",name:"Keto Pasta",price:280},
+  {id:17,category:"Cold Drinks",name:"Moringa",price:75},
+  {id:18,category:"Cold Drinks",name:"Calamansi",price:75},
+  {id:19,category:"Cold Drinks",name:"Guyabano",price:75},
+  {id:20,category:"Cold Drinks",name:"Iced Tea",price:75},
+  {id:21,category:"Cold Drinks",name:"Iced Choco",price:125},
+  {id:22,category:"Burger",name:"Monty's Burger",price:200},
+  {id:23,category:"Burger",name:"Spam, Bacon, Egg & Cheese",price:200},
+  {id:24,category:"Burger",name:"Mushroom Burger (meat)",price:200},
+  {id:25,category:"Burger",name:"Roast Beef Bun",price:200},
+  {id:26,category:"Burger",name:"Chili-dog",price:200},
+  {id:27,category:"Burger",name:"Bunwich COMBO (served with FRIES & DRINKS)",price:350},
+  {id:28,category:"Sandwiches",name:"Pulled Pork",price:150},
+  {id:29,category:"Sandwiches",name:"Spam",price:150},
+  {id:30,category:"Sandwiches",name:"Spicy Tofu",price:150},
+  {id:31,category:"Sandwiches",name:"Chili Con Carne",price:150},
+  {id:32,category:"Sandwiches",name:"Longanisa",price:150},
+  {id:33,category:"Sandwiches",name:"Egg Omelette",price:150},
+  {id:34,category:"Sandwiches",name:"Banana Nutella",price:150},
+  {id:35,category:"Sandwiches",name:"Garden",price:150},
+  {id:36,category:"Sandwiches",name:"COMBO",price:300},
+  {id:37,category:"Panini",name:"3Cheese Panini",price:200},
+  {id:38,category:"Panini",name:"ABC Panini",price:200},
+  {id:39,category:"Panini",name:"Chicken Pesto Panini",price:200},
+  {id:40,category:"Panini",name:"Pizza Panini",price:200},
+  {id:41,category:"All Day Breakfast",name:"Bacon French Toast",price:300},
+  {id:42,category:"All Day Breakfast",name:"Banana Pancake (served with coffee)",price:300},
+  {id:43,category:"Fresh Fruit Milk Shake",name:"Mango",price:180},
+  {id:44,category:"Fresh Fruit Milk Shake",name:"ACM",price:180},
+  {id:45,category:"Fresh Fruit Milk Shake",name:"Strawberry-Mango",price:180},
+  {id:46,category:"Frappe",name:"Oreo",price:180},
+  {id:47,category:"Frappe",name:"Mango",price:180},
+  {id:48,category:"Frappe",name:"Strawberry",price:180},
+  {id:49,category:"Frappe",name:"Choco",price:180},
+  {id:50,category:"Frappe",name:"Choco Banana",price:180},
+  {id:51,category:"Frappe",name:"Coffee",price:180},
+  {id:52,category:"Frappe",name:"Coffee Caramel",price:180},
+  {id:53,category:"Frappe",name:"Salted Caramel",price:180},
+  {id:54,category:"Frappe",name:"Mocha",price:180},
+  {id:55,category:"Frappe",name:"Toffee Crunch",price:180},
+  {id:56,category:"Frappe",name:"Matcha",price:180},
+  {id:57,category:"Over Iced",name:"Latte",price:160},
+  {id:58,category:"Over Iced",name:"Americano",price:125},
+  {id:59,category:"Over Iced",name:"Mocha",price:180},
+  {id:60,category:"Over Iced",name:"Salted",price:180},
+  {id:61,category:"Over Iced",name:"Caramel",price:180},
+  {id:62,category:"Hot Coffee",name:"Tea",price:75},
+  {id:63,category:"Hot Coffee",name:"Brewed Coffee",price:100},
+  {id:64,category:"Hot Coffee",name:"Hot Choco",price:125},
+  {id:65,category:"Hot Coffee",name:"Golden Tea",price:125},
+  {id:66,category:"Hot Coffee",name:"Americano",price:100},
+  {id:67,category:"Hot Coffee",name:"Espresso",price:100},
+  {id:68,category:"Hot Coffee",name:"Latte",price:160},
+  {id:69,category:"Hot Coffee",name:"Cappuccino",price:160},
+  {id:70,category:"Hot Coffee",name:"Matcha Latte",price:160},
+  {id:71,category:"Hot Coffee",name:"Hot Mocha",price:180},
+  {id:72,category:"Hot Coffee",name:"Salted Caramel",price:180},
+  {id:73,category:"Fries",name:"Barkada Fries",price:250},
+  {id:74,category:"Fries",name:"Loaded Fries (Beef or Cheesy Bacon)",price:250},
+  {id:75,category:"Fries",name:"Mojos",price:250}
+];
+
+let orderType = null;
+let cart = {};
+let tableNumber = "";
+let claimNumberValue = "";
+let deliveryAddressValue = "";
+
+const stepType = document.getElementById('step-type');
+const stepExtras = document.getElementById('step-extras');
+const stepMenu = document.getElementById('step-menu');
+const dineinFields = document.getElementById('dinein-fields');
+const takeoutFields = document.getElementById('takeout-fields');
+const deliveryFields = document.getElementById('delivery-fields');
+const chosenTypeEl = document.getElementById('chosen-type');
+const menuList = document.getElementById('menu-list');
+const cartContents = document.getElementById('cart-contents');
+const extraSummary = document.getElementById('extra-summary');
+const cartTotalEl = document.getElementById('cart-total');
+const copyOrderBtn = document.getElementById('copy-order');
+const copyNotice = document.getElementById('copy-notice');
+const fbLinkSection = document.getElementById('fb-link-section');
+const tableInput = document.getElementById('table-number');
+const claimInput = document.getElementById('claim-number');
+const claimStatus = document.getElementById('claim-status');
+const addressInput = document.getElementById('delivery-address');
+const confirmExtrasBtn = document.getElementById('confirm-extras');
+
+function checkClaimNumber(num){
+  const n = parseInt(num, 10);
+  if(!num || isNaN(n)) return {valid:false, message:"⚠️ Enter a valid number"};
+  if(takenClaimNumbers.includes(n)){
+    return {valid:false, message:`❌ Number ${n} IS ALREADY TAKEN. Please choose another.`};
+  }
+  return {valid:true, message:`✅ Number ${n} is AVAILABLE — proceed!`};
+}
+
+claimInput.addEventListener('input', () => {
+  const res = checkClaimNumber(claimInput.value.trim());
+  claimStatus.textContent = res.message;
+  claimStatus.className = res.valid ? "hint success-text" : "hint error-text";
+  claimNumberValue = res.valid ? claimInput.value.trim() : "";
+});
+
+function renderMenu(){
+  const cats = [...new Set(MENU.map(i=>i.category))];
+  menuList.innerHTML = cats.map(cat => `
+    <div class="menu-category">
+      <div class="cat-title">${cat}</div>
+      ${MENU.filter(i=>i.category===cat).map(item => `
+        <div class="menu-item">
+          <div class="item-left">
+            <div class="item-name">${item.name}</div>
+            <div class="item-price">${CURRENCY}${item.price}</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn" data-id="${item.id}" data-action="minus">−</button>
+            <span class="qty-val" data-id="${item.id}">${cart[item.id]||0}</span>
+            <button class="qty-btn" data-id="${item.id}" data-action="plus">+</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function buildOrderMessage(){
+  const lines = [];
+  lines.push(`☕ MADISON'S CAFE BALER — ORDER`);
+  lines.push(`Type: ${orderType}`);
+  if(orderType==="Dine-In") lines.push(`Table No.: ${tableNumber}`);
+  if(orderType==="Take-Out") lines.push(`Preferred Claim No.: ${claimNumberValue}`);
+  if(orderType==="Delivery") lines.push(`Delivery Address:\n${deliveryAddressValue}`);
+  lines.push('──────────────────────');
+  for(const id in cart){
+    const qty=cart[id], item=MENU.find(i=>i.id==id);
+    lines.push(`${item.name} × ${qty} — ${CURRENCY}${(item.price*qty).toFixed(2)}`);
+  }
+  lines.push('──────────────────────');
+  const grandTotal = Object.entries(cart).reduce((sum,[id,qty])=>{
+    const it=MENU.find(i=>i.id==id); return sum+it.price*qty;
+  },0);
+  lines.push(`TOTAL: ${CURRENCY}${grandTotal.toFixed(2)}`);
+  lines.push('');
+  lines.push('Thank you! — Madison\'s Cafe Baler');
+  return lines.join('\n');
+}
+
+function updateCart(){
+  let html='', total=0;
+  for(const id in cart){
+    const qty=cart[id], item=MENU.find(i=>i.id==id);
+    if(!qty) continue;
+    const subt=item.price*qty; total+=subt;
+    html+=`<div class="cart-item"><span>${item.name} × ${qty}</span><span>${CURRENCY}${subt.toFixed(2)}</span></div>`;
+  }
+  cartContents.innerHTML = html || '<p style="color:#999;font-style:italic">Empty — add items below</p>';
+  
+  let extraHtml = "";
+  if(orderType==="Dine-In" && tableNumber){
+    extraHtml += `<strong>Table:</strong> ${tableNumber}<br>`;
+  }
+  if(orderType==="Take-Out" && claimNumberValue){
+    extraHtml += `<strong>Claim:</strong> ${claimNumberValue}<br>`;
+  }
+  if(orderType==="Delivery" && deliveryAddressValue){
+    extraHtml += `<strong>Address:</strong> ${deliveryAddressValue}`;
+  }
+  extraSummary.innerHTML = extraHtml;
+  
+  cartTotalEl.textContent = `${CURRENCY}${total.toFixed(2)}`;
+  
+  const hasItems = Object.keys(cart).length > 0;
+  const extrasOk = 
+    orderType==="Dine-In" ? !!tableNumber.trim() :
+    orderType==="Take-Out" ? !!claimNumberValue :
+    orderType==="Delivery" ? !!deliveryAddressValue.trim() : true;
+  
+  copyOrderBtn.disabled = !(hasItems && extrasOk);
+  copyNotice.classList.add('hidden');
+  fbLinkSection.classList.add('hidden');
+  
+  document.querySelectorAll('.qty-val').forEach(el=>{
+    el.textContent = cart[el.dataset.id]||0;
+  });
+}
+
+async function copyOrder(){
+  if(orderType==="Dine-In" && !tableNumber.trim()){
+    alert("⚠️ Please enter your Table Number first.");
+    return;
+  }
+  if(orderType==="Take-Out" && !claimNumberValue){
+    alert("⚠️ Please choose a valid, available claim number first.");
+    return;
+  }
+  if(orderType==="Delivery" && !deliveryAddressValue.trim()){
+    alert("⚠️ Please fill in your delivery address.");
+    return;
+  }
+  
+  const message = buildOrderMessage();
+  
+  try {
+    await navigator.clipboard.writeText(message);
+    copyNotice.textContent = "✅ Order copied!";
+    copyNotice.style.color = "var(--success)";
+  } catch (err) {
+    const textarea = document.createElement('textarea');
+    textarea.value = message;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    copyNotice.textContent = "✅ Order copied!";
+    copyNotice.style.color = "var(--success)";
+  }
+  copyNotice.classList.remove('hidden');
+  
+  if(orderType==="Take-Out" && claimNumberValue){
+    const num = parseInt(claimNumberValue,10);
+    if(!takenClaimNumbers.includes(num)){
+      takenClaimNumbers.push(num);
+    }
+  }
+  
+  fbLinkSection.classList.remove('hidden');
+}
+
+stepType.addEventListener('click', e=>{
+  if(!e.target.matches('[data-type]')) return;
+  orderType = e.target.dataset.type;
+  document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  
+  tableNumber = "";
+  claimNumberValue = "";
+  deliveryAddressValue = "";
+  if(tableInput) tableInput.value = "";
+  claimInput.value = "";
+  addressInput.value = "";
+  claimStatus.textContent = "";
+  copyNotice.classList.add('hidden');
+  fbLinkSection.classList.add('hidden');
+  
+  stepType.classList.add('hidden');
+  stepExtras.classList.remove('hidden');
+  
+  dineinFields.classList.toggle('hidden', orderType!=="Dine-In");
+  takeoutFields.classList.toggle('hidden', orderType!=="Take-Out");
+  deliveryFields.classList.toggle('hidden', orderType!=="Delivery");
+});
+
+confirmExtrasBtn.addEventListener('click', () => {
+  if(orderType==="Dine-In"){
+    tableNumber = tableInput.value.trim();
+    if(!tableNumber){
+      alert("⚠️ Please enter your Table Number.");
+      return;
+    }
+  }
+  if(orderType==="Take-Out" && !claimNumberValue){
+    alert("⚠️ That number is taken or invalid. Pick another.");
+    return;
+  }
+  if(orderType==="Delivery"){
+    deliveryAddressValue = addressInput.value.trim();
+    if(!deliveryAddressValue){
+      alert("⚠️ Please fill in your delivery address.");
+      return;
+    }
+  }
+  
+  stepExtras.classList.add('hidden');
+  chosenTypeEl.textContent = orderType;
+  stepMenu.classList.remove('hidden');
+  renderMenu();
+  updateCart();
+});
+
+document.body.addEventListener('click', e=>{
+  if(!e.target.matches('[data-action]')) return;
+  const {id,action}=e.target.dataset;
+  cart[id] = (cart[id]||0) + (action==='plus'?1:-1);
+  if(cart[id]<=0) delete cart[id];
+  updateCart();
+});
+
+copyOrderBtn.addEventListener('click', copyOrder);
+</script>
+</body>
+</html>
