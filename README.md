@@ -1,1 +1,0 @@
-# Madison-Cafe-Baler
